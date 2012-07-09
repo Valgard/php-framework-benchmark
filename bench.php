@@ -19,7 +19,7 @@ $gn = isset($opt['n']) ? $opt['n'] : 30000;
 
 $al = array(
     'symfony2' => 'Symfony 2.0.6',
-    'zf' => 'Zend Framework 1.11.11',
+    'zf' => 'Zend Framework 1.11.12',
     'zf2' => 'Zend Framework 2.0.0-beta1',
     'cakephp' => 'CakePHP 2.0.4',
     'fuelphp' => 'FuelPHP 1.1',
