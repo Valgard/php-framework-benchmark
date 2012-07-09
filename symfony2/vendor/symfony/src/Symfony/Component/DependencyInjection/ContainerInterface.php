@@ -41,8 +41,8 @@ interface ContainerInterface
     /**
      * Gets a service.
      *
-     * @param  string $id              The service identifier
-     * @param  int    $invalidBehavior The behavior when the service does not exist
+     * @param string $id              The service identifier
+     * @param int    $invalidBehavior The behavior when the service does not exist
      *
      * @return object The associated service
      *
@@ -57,7 +57,7 @@ interface ContainerInterface
     /**
      * Returns true if the given service is defined.
      *
-     * @param  string  $id      The service identifier
+     * @param string $id The service identifier
      *
      * @return Boolean true if the service is defined, false otherwise
      *
@@ -68,7 +68,7 @@ interface ContainerInterface
     /**
      * Gets a parameter.
      *
-     * @param  string $name The parameter name
+     * @param string $name The parameter name
      *
      * @return mixed  The parameter value
      *
@@ -81,7 +81,7 @@ interface ContainerInterface
     /**
      * Checks if a parameter exists.
      *
-     * @param  string $name The parameter name
+     * @param string $name The parameter name
      *
      * @return Boolean The presence of parameter in container
      *
@@ -103,6 +103,7 @@ interface ContainerInterface
      * Enters the given scope
      *
      * @param string $name
+     *
      * @return void
      *
      * @api
@@ -113,6 +114,7 @@ interface ContainerInterface
      * Leaves the current scope, and re-enters the parent scope
      *
      * @param string $name
+     *
      * @return void
      *
      * @api
@@ -123,6 +125,7 @@ interface ContainerInterface
      * Adds a scope to the container
      *
      * @param ScopeInterface $scope
+     *
      * @return void
      *
      * @api
@@ -133,6 +136,7 @@ interface ContainerInterface
      * Whether this container has the given scope
      *
      * @param string $name
+     *
      * @return Boolean
      *
      * @api
@@ -145,6 +149,7 @@ interface ContainerInterface
      * It does however not check if the scope actually exists.
      *
      * @param string $name
+     *
      * @return Boolean
      *
      * @api

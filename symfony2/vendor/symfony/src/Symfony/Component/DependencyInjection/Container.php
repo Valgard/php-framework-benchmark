@@ -131,7 +131,7 @@ class Container implements ContainerInterface
     /**
      * Gets a parameter.
      *
-     * @param  string $name The parameter name
+     * @param string $name The parameter name
      *
      * @return mixed  The parameter value
      *
@@ -147,7 +147,7 @@ class Container implements ContainerInterface
     /**
      * Checks if a parameter exists.
      *
-     * @param  string $name The parameter name
+     * @param string $name The parameter name
      *
      * @return Boolean The presence of parameter in container
      *
@@ -202,7 +202,7 @@ class Container implements ContainerInterface
     /**
      * Returns true if the given service is defined.
      *
-     * @param  string  $id      The service identifier
+     * @param string $id The service identifier
      *
      * @return Boolean true if the service is defined, false otherwise
      *
@@ -221,8 +221,8 @@ class Container implements ContainerInterface
      * If a service is both defined through a set() method and
      * with a set*Service() method, the former has always precedence.
      *
-     * @param  string  $id              The service identifier
-     * @param  integer $invalidBehavior The behavior when the service does not exist
+     * @param string  $id              The service identifier
+     * @param integer $invalidBehavior The behavior when the service does not exist
      *
      * @return object The associated service
      *
@@ -286,6 +286,7 @@ class Container implements ContainerInterface
      * This is called when you enter a scope
      *
      * @param string $name
+     *
      * @return void
      *
      * @api
@@ -331,7 +332,9 @@ class Container implements ContainerInterface
      * scope.
      *
      * @param string $name The name of the scope to leave
+     *
      * @return void
+     *
      * @throws \InvalidArgumentException if the scope is not active
      *
      * @api
@@ -370,6 +373,7 @@ class Container implements ContainerInterface
      * Adds a scope to the container.
      *
      * @param ScopeInterface $scope
+     *
      * @return void
      *
      * @api
@@ -403,6 +407,7 @@ class Container implements ContainerInterface
      * Returns whether this container has a certain scope
      *
      * @param string $name The name of the scope
+     *
      * @return Boolean
      *
      * @api
@@ -418,6 +423,7 @@ class Container implements ContainerInterface
      * This does not actually check if the passed scope actually exists.
      *
      * @param string $name
+     *
      * @return Boolean
      *
      * @api
@@ -431,6 +437,7 @@ class Container implements ContainerInterface
      * Camelizes a string.
      *
      * @param string $id A string to camelize
+     *
      * @return string The camelized string
      */
     static public function camelize($id)
@@ -442,6 +449,7 @@ class Container implements ContainerInterface
      * A string to underscore.
      *
      * @param string $id The string to underscore
+     *
      * @return string The underscored string
      */
     static public function underscore($id)

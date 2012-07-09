@@ -96,8 +96,10 @@ class MimeTypeGuesser implements MimeTypeGuesserInterface
      * returns a value that is not NULL, this method terminates and returns the
      * value.
      *
-     * @param  string $path   The path to the file
+     * @param string $path The path to the file
+     *
      * @return string         The mime type or NULL, if none could be guessed
+     *
      * @throws FileException  If the file does not exist
      */
     public function guess($path)
@@ -111,7 +113,7 @@ class MimeTypeGuesser implements MimeTypeGuesserInterface
         }
 
         if (!$this->guessers) {
-            throw new \LogicException('Unable to guess the mime type as no guessers are available.');
+            throw new \LogicException('Unable to guess the mime type as no guessers are available (Did you enable the php_fileinfo extension?)');
         }
 
         foreach ($this->guessers as $guesser) {

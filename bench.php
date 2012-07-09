@@ -18,7 +18,7 @@ $gc = isset($opt['c']) ? $opt['c'] : 100;
 $gn = isset($opt['n']) ? $opt['n'] : 30000;
 
 $al = array(
-    'symfony2' => 'Symfony 2.0.6',
+    'symfony2' => 'Symfony 2.0.15',
     'zf' => 'Zend Framework 1.11.12',
     'zf2' => 'Zend Framework 2.0.0-BETA4',
     'cakephp' => 'CakePHP 2.0.4',
