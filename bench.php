@@ -20,6 +20,7 @@ $gn = isset($opt['n']) ? $opt['n'] : 30000;
 $al = array(
     'symfony' => 'Symfony 1.4.18',
     'symfony2' => 'Symfony 2.0.15',
+    'symfony21' => 'Symfony2 2.1.0-BETA1',
     'zf' => 'Zend Framework 1.11.12',
     'zf2' => 'Zend Framework 2.0.0-BETA4',
     'cakephp' => 'CakePHP 2.0.4',
