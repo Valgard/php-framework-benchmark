@@ -18,6 +18,7 @@ $gc = isset($opt['c']) ? $opt['c'] : 100;
 $gn = isset($opt['n']) ? $opt['n'] : 30000;
 
 $al = array(
+    'noframework' => 'Plain PHP',
     'symfony' => 'Symfony 1.4.18',
     'symfony2' => 'Symfony 2.0.15',
     'symfony21' => 'Symfony2 2.1.0-BETA1',
