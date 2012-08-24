@@ -65,6 +65,17 @@ class ControllerResolver extends BaseControllerResolver
             throw new \InvalidArgumentException(sprintf('Class "%s" does not exist.', $class));
         }
 
+        $controller = call_user_func($this->createInjector($class), $this->container);
+
+        if ($controller instanceof ContainerAwareInterface) {
+            $controller->setContainer($this->container);
+        }
+
+        return array($controller, $method);
+    }
+
+    public function createInjector($class)
+    {
         $filename = $this->container->getParameter('jms_di_extra.cache_dir').'/controller_injectors/'.str_replace('\\', '', $class).'.php';
         $cache = new ConfigCache($filename, $this->container->getParameter('kernel.debug'));
 
@@ -75,20 +86,17 @@ class ControllerResolver extends BaseControllerResolver
                 $metadata->addClassMetadata(new ClassMetadata($class));
             }
 
-            $this->prepareContainer($cache, $filename, $metadata);
+            $this->prepareContainer($cache, $filename, $metadata, $class);
         }
 
-        $inject = require $filename;
-        $controller = $inject($this->container);
-
-        if ($controller instanceof ContainerAwareInterface) {
-            $controller->setContainer($this->container);
+        if ( ! class_exists($class.'__JMSInjector', false)) {
+            require $filename;
         }
 
-        return array($controller, $method);
+        return array($class.'__JMSInjector', 'inject');
     }
 
-    private function prepareContainer($cache, $containerFilename, $metadata)
+    private function prepareContainer($cache, $containerFilename, $metadata, $className)
     {
         $container = new ContainerBuilder();
         $container->setParameter('jms_aop.cache_dir', $this->container->getParameter('jms_di_extra.cache_dir'));
@@ -137,7 +145,7 @@ class ControllerResolver extends BaseControllerResolver
             $generator = new DefinitionInjectorGenerator();
         }
 
-        $cache->write($generator->generate($container->getDefinition('controller')), $container->getResources());
+        $cache->write($generator->generate($container->getDefinition('controller'), $className), $container->getResources());
     }
 
     private function generateLookupMethods($def, $metadata)

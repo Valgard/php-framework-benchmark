@@ -41,9 +41,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * Generates the configuration tree builder.
-     *
-     * @return \Symfony\Component\Config\Definition\Builder\TreeBuilder The tree builder
+     * {@inheritDoc}
      */
     public function getConfigTreeBuilder()
     {
@@ -56,6 +54,11 @@ class Configuration implements ConfigurationInterface
         return $treeBuilder;
     }
 
+    /**
+     * Add DBAL section to configuration tree
+     *
+     * @param ArrayNodeDefinition $node
+     */
     private function addDbalSection(ArrayNodeDefinition $node)
     {
         $node
@@ -105,6 +108,11 @@ class Configuration implements ConfigurationInterface
         ;
     }
 
+    /**
+     * Return the dbal connections node
+     *
+     * @return ArrayNodeDefinition
+     */
     private function getDbalConnectionsNode()
     {
         $treeBuilder = new TreeBuilder();
@@ -126,6 +134,7 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->scalarNode('driver')->defaultValue('pdo_mysql')->end()
                 ->scalarNode('platform_service')->end()
+                ->scalarNode('schema_filter')->end()
                 ->booleanNode('logging')->defaultValue($this->debug)->end()
                 ->booleanNode('profiling')->defaultValue($this->debug)->end()
                 ->scalarNode('driver_class')->end()
@@ -157,7 +166,7 @@ class Configuration implements ConfigurationInterface
      *
      * These keys are available for slave configurations too.
      *
-     * @param \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node
+     * @param ArrayNodeDefinition $node
      */
     private function configureDbalDriverNode(ArrayNodeDefinition $node)
     {
@@ -202,6 +211,11 @@ class Configuration implements ConfigurationInterface
         ;
     }
 
+    /**
+     * Add the ORM section to configuration tree
+     *
+     * @param ArrayNodeDefinition $node
+     */
     private function addOrmSection(ArrayNodeDefinition $node)
     {
         $node
@@ -246,6 +260,11 @@ class Configuration implements ConfigurationInterface
         ;
     }
 
+    /**
+     * Return ORM target entity resolver node
+     *
+     * @return \Symfony\Component\Config\Definition\Builder\NodeDefinition
+     */
     private function getOrmTargetEntityResolverNode()
     {
         $treeBuilder = new TreeBuilder();
@@ -261,6 +280,11 @@ class Configuration implements ConfigurationInterface
         return $node;
     }
 
+    /**
+     * Return ORM entity manager node
+     *
+     * @return ArrayNodeDefinition
+     */
     private function getOrmEntityManagersNode()
     {
         $treeBuilder = new TreeBuilder();
@@ -279,6 +303,7 @@ class Configuration implements ConfigurationInterface
                     ->scalarNode('class_metadata_factory_name')->defaultValue('Doctrine\ORM\Mapping\ClassMetadataFactory')->end()
                     ->scalarNode('default_repository_class')->defaultValue('Doctrine\ORM\EntityRepository')->end()
                     ->scalarNode('auto_mapping')->defaultFalse()->end()
+                    ->scalarNode('naming_strategy')->defaultValue('doctrine.orm.naming_strategy.default')->end()
                 ->end()
                 ->fixXmlConfig('hydrator')
                 ->children()
@@ -362,6 +387,13 @@ class Configuration implements ConfigurationInterface
         return $node;
     }
 
+    /**
+     * Return a ORM cache driver node for an given entity manager
+     *
+     * @param string $name
+     *
+     * @return ArrayNodeDefinition
+     */
     private function getOrmCacheDriverNode($name)
     {
         $treeBuilder = new TreeBuilder();

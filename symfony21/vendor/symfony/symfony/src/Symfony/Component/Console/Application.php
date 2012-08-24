@@ -619,7 +619,7 @@ class Application
      *
      * @return array An array of abbreviations
      */
-    static public function getAbbreviations($names)
+    public static function getAbbreviations($names)
     {
         $abbrevs = array();
         foreach ($names as $name) {
@@ -882,7 +882,7 @@ class Application
      */
     protected function getCommandName(InputInterface $input)
     {
-        return $input->getFirstArgument('command');
+        return $input->getFirstArgument();
     }
 
     /**
@@ -1041,7 +1041,7 @@ class Application
      * if nothing is found in $collection, try in $abbrevs
      *
      * @param string               $name       The string
-     * @param array|Traversable    $collection The collecion
+     * @param array|Traversable    $collection The collection
      * @param array                $abbrevs    The abbreviations
      * @param Closure|string|array $callback   The callable to transform collection item before comparison
      *

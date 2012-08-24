@@ -13,14 +13,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * This software consists of voluntary contributions made by many individuals
- * and is licensed under the LGPL. For more information, see
+ * and is licensed under the MIT license. For more information, see
  * <http://www.phpdoctrine.org>.
  */
 
 namespace Doctrine\DBAL\Schema;
 
-use Doctrine\DBAL\Event\SchemaIndexDefinitionEventArgs;
 use Doctrine\DBAL\Events;
+use Doctrine\DBAL\Event\SchemaIndexDefinitionEventArgs;
+use Doctrine\DBAL\Driver\SQLSrv\SQLSrvException;
 
 /**
  * SQL Server Schema Manager
@@ -104,26 +105,35 @@ class SQLServerSchemaManager extends AbstractSchemaManager
      */
     protected function _getPortableTableIndexesList($tableIndexRows, $tableName=null)
     {
+        // TODO: Remove code duplication with AbstractSchemaManager;
         $result = array();
-        foreach ($tableIndexRows AS $tableIndex) {
+        foreach ($tableIndexRows as $tableIndex) {
             $indexName = $keyName = $tableIndex['index_name'];
             if (strpos($tableIndex['index_description'], 'primary key') !== false) {
                 $keyName = 'primary';
             }
             $keyName = strtolower($keyName);
 
+            $flags = array();
+            if (strpos($tableIndex['index_description'], 'clustered') !== false) {
+                $flags[] = 'clustered';
+            } else if (strpos($tableIndex['index_description'], 'nonclustered') !== false) {
+                $flags[] = 'nonclustered';
+            }
+
             $result[$keyName] = array(
                 'name' => $indexName,
                 'columns' => explode(', ', $tableIndex['index_keys']),
                 'unique' => strpos($tableIndex['index_description'], 'unique') !== false,
                 'primary' => strpos($tableIndex['index_description'], 'primary key') !== false,
+                'flags' => $flags,
             );
         }
 
         $eventManager = $this->_platform->getEventManager();
 
         $indexes = array();
-        foreach ($result AS $indexKey => $data) {
+        foreach ($result as $indexKey => $data) {
             $index = null;
             $defaultPrevented = false;
 
@@ -135,7 +145,7 @@ class SQLServerSchemaManager extends AbstractSchemaManager
                 $index = $eventArgs->getIndex();
             }
 
-            if (!$defaultPrevented) {
+            if ( ! $defaultPrevented) {
                 $index = new Index($data['name'], $data['columns'], $data['unique'], $data['primary']);
             }
 
@@ -205,6 +215,12 @@ class SQLServerSchemaManager extends AbstractSchemaManager
             $tableIndexes = $this->_conn->fetchAll($sql);
         } catch(\PDOException $e) {
             if ($e->getCode() == "IMSSP") {
+                return array();
+            } else {
+                throw $e;
+            }
+        } catch(SQLSrvException $e) {
+            if (strpos($e->getMessage(), 'SQLSTATE [01000, 15472]') === 0) {
                 return array();
             } else {
                 throw $e;

@@ -21,9 +21,9 @@ use Symfony\Component\Console\Tester\ApplicationTester;
 
 class ApplicationTest extends \PHPUnit_Framework_TestCase
 {
-    static protected $fixturesPath;
+    protected static $fixturesPath;
 
-    static public function setUpBeforeClass()
+    public static function setUpBeforeClass()
     {
         self::$fixturesPath = realpath(__DIR__.'/Fixtures/');
         require_once self::$fixturesPath.'/FooCommand.php';
@@ -224,7 +224,7 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
         $application->add(new \Foo2Command());
 
         try {
-            $application->find($commandName = 'Unknow command');
+            $application->find($commandName = 'Unknown command');
             $this->fail('->find() throws an \InvalidArgumentException if command does not exist');
         } catch (\Exception $e) {
             $this->assertInstanceOf('\InvalidArgumentException', $e, '->find() throws an \InvalidArgumentException if command does not exist');
@@ -264,11 +264,11 @@ class ApplicationTest extends \PHPUnit_Framework_TestCase
         $application->add(new \foo3Command());
 
         try {
-            $application->find('Unknow-namespace:Unknow-command');
+            $application->find('Unknown-namespace:Unknown-command');
             $this->fail('->find() throws an \InvalidArgumentException if namespace does not exist');
         } catch (\Exception $e) {
             $this->assertInstanceOf('\InvalidArgumentException', $e, '->find() throws an \InvalidArgumentException if namespace does not exist');
-            $this->assertEquals('There are no commands defined in the "Unknow-namespace" namespace.', $e->getMessage(), '->find() throws an \InvalidArgumentException if namespace does not exist, without alternatives');
+            $this->assertEquals('There are no commands defined in the "Unknown-namespace" namespace.', $e->getMessage(), '->find() throws an \InvalidArgumentException if namespace does not exist, without alternatives');
         }
 
         try {

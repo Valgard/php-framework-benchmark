@@ -57,7 +57,7 @@ class Process
      *
      * @var array
      */
-    static public $exitCodes = array(
+    public static $exitCodes = array(
         0 => 'OK',
         1 => 'General error',
         2 => 'Misuse of shell builtins',
@@ -131,7 +131,7 @@ class Process
             $this->env = null;
         }
         $this->stdin = $stdin;
-        $this->timeout = $timeout;
+        $this->setTimeout($timeout);
         $this->enhanceWindowsCompatibility = true;
         $this->options = array_replace(array('suppress_errors' => true, 'binary_pipes' => true), $options);
     }
@@ -180,7 +180,7 @@ class Process
      * the output in real-time while writing the standard input to the process.
      * It allows to have feedback from the independent process during execution.
      * If there is no callback passed, the wait() method can be called
-     * with true as a second parameter then the callback will get all data occured
+     * with true as a second parameter then the callback will get all data occurred
      * in (and since) the start call.
      *
      * @param Closure|string|array $callback A PHP callback to run whenever there is some
@@ -290,7 +290,7 @@ class Process
             }
         }
 
-        $this->processInformation = proc_get_status($this->process);
+        $this->updateStatus();
     }
 
     /**
@@ -308,7 +308,7 @@ class Process
      */
     public function wait($callback = null)
     {
-        $this->processInformation = proc_get_status($this->process);
+        $this->updateStatus();
         $callback = $this->buildCallback($callback);
         while ($this->pipes || (defined('PHP_WINDOWS_VERSION_BUILD') && $this->fileHandles)) {
             if (defined('PHP_WINDOWS_VERSION_BUILD') && $this->fileHandles) {
@@ -525,7 +525,7 @@ class Process
      *
      * @param float $timeout The timeout in seconds
      *
-     * @return int The exitcode of the process
+     * @return integer The exitcode of the process
      *
      * @throws \RuntimeException if the process got signaled
      */
@@ -585,8 +585,27 @@ class Process
         return $this->timeout;
     }
 
+    /**
+     * Sets the process timeout.
+     *
+     * To disable the timeout, set this value to null.
+     *
+     * @param integer|null
+     */
     public function setTimeout($timeout)
     {
+        if (null === $timeout) {
+            $this->timeout = null;
+
+            return;
+        }
+
+        $timeout = (integer) $timeout;
+
+        if ($timeout < 0) {
+            throw new \InvalidArgumentException('The timeout value must be a valid positive integer.');
+        }
+
         $this->timeout = $timeout;
     }
 
@@ -643,8 +662,8 @@ class Process
     /**
      * Builds up the callback used by wait().
      *
-     * The callbacks adds all occured output to the specific buffer and calls
-     * the usercallback (if present) with the received output.
+     * The callbacks adds all occurred output to the specific buffer and calls
+     * the user callback (if present) with the received output.
      *
      * @param mixed $callback The user defined PHP callback
      *

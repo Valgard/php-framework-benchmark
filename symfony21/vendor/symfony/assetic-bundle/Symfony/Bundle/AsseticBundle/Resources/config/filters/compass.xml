@@ -16,12 +16,14 @@
         <parameter key="assetic.filter.compass.generated_images_path">null</parameter>
         <parameter key="assetic.filter.compass.http_javascripts_path">null</parameter>
         <parameter key="assetic.filter.compass.plugins" type="collection" />
+        <parameter key="assetic.filter.compass.load_paths" type="collection" />
     </parameters>
 
     <services>
         <service id="assetic.filter.compass" class="%assetic.filter.compass.class%">
             <tag name="assetic.filter" alias="compass" />
             <argument>%assetic.filter.compass.bin%</argument>
+            <argument>%assetic.ruby.bin%</argument>
             <call method="setDebugInfo"><argument>%assetic.filter.compass.debug%</argument></call>
             <call method="setStyle"><argument>%assetic.filter.compass.style%</argument></call>
             <call method="setImagesDir"><argument>%assetic.filter.compass.images_dir%</argument></call>
@@ -31,6 +33,7 @@
             <call method="setGeneratedImagesPath"><argument>%assetic.filter.compass.generated_images_path%</argument></call>
             <call method="setHttpJavascriptsPath"><argument>%assetic.filter.compass.http_javascripts_path%</argument></call>
             <call method="setPlugins"><argument>%assetic.filter.compass.plugins%</argument></call>
+            <call method="setLoadPaths"><argument>%assetic.filter.compass.load_paths%</argument></call>
         </service>
     </services>
 </container>

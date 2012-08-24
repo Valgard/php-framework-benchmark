@@ -56,6 +56,11 @@
         padding-bottom: 0;
     }
 
+    .sf-toolbar-block .sf-toolbar-info-piece a,
+    .sf-toolbar-block .sf-toolbar-info-piece abbr {
+        color: #2f2f2f;
+    }
+
     .sf-toolbar-block .sf-toolbar-info-piece b {
         display: inline-block;
         width: 110px;
@@ -81,7 +86,7 @@
         margin-left: -1px;
 
         bottom: 38px;
-        border-bottom: 1px solid #fff;
+        border-bottom-width: 0;
     }
 
     .sf-toolbar-block .sf-toolbar-info:empty {
@@ -211,9 +216,9 @@
         }
 
         .sf-toolbar-block .sf-toolbar-info {
-            top: 38px;
+            top: 39px;
             bottom: auto;
-            border-top: 1px solid #fff;
+            border-top-width: 0;
             border-bottom: 1px solid #bbb;
         }
     {% endif %}
