@@ -1,21 +1,11 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Authentication
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Authentication
  */
 
 namespace Zend\Authentication;
@@ -23,31 +13,28 @@ namespace Zend\Authentication;
 /**
  * @category   Zend
  * @package    Zend_Authentication
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class AuthenticationService
 {
     /**
      * Persistent storage handler
      *
-     * @var Zend\Authentication\Storage\StorageInterface
+     * @var Storage\StorageInterface
      */
     protected $storage = null;
 
     /**
      * Authentication adapter
      *
-     * @var Zend\Authentication\Adapter\AdapterInterface
+     * @var Adapter\AdapterInterface
      */
     protected $adapter = null;
 
     /**
      * Constructor
-     * 
-     * @param  Storage\StorageInterface $storage 
-     * @param  Adapter\AdapterInterface $adapter 
-     * @return void
+     *
+     * @param  Storage\StorageInterface $storage
+     * @param  Adapter\AdapterInterface $adapter
      */
     public function __construct(Storage\StorageInterface $storage = null, Adapter\AdapterInterface $adapter = null)
     {
@@ -64,7 +51,7 @@ class AuthenticationService
      *
      * The adapter does not have a default if the storage adapter has not been set.
      *
-     * @return Zend\Authentication\Adapter\AdapterInterface|null
+     * @return Adapter\AdapterInterface|null
      */
     public function getAdapter()
     {
@@ -74,8 +61,8 @@ class AuthenticationService
     /**
      * Sets the authentication adapter
      *
-     * @param  Zend\Authentication\Adapter\AdapterInterface $adapter
-     * @return Zend\Authentication\AuthenticationService Provides a fluent interface
+     * @param  Adapter\AdapterInterface $adapter
+     * @return AuthenticationService Provides a fluent interface
      */
     public function setAdapter(Adapter\AdapterInterface $adapter)
     {
@@ -88,7 +75,7 @@ class AuthenticationService
      *
      * Session storage is used by default unless a different storage adapter has been set.
      *
-     * @return Zend\Authentication\Storage\StorageInterface
+     * @return Storage\StorageInterface
      */
     public function getStorage()
     {
@@ -102,8 +89,8 @@ class AuthenticationService
     /**
      * Sets the persistent storage handler
      *
-     * @param  Zend\Authentication\Storage\StorageInterface $storage
-     * @return Zend\Authentication\AuthenticationService Provides a fluent interface
+     * @param  Storage\StorageInterface $storage
+     * @return AuthenticationService Provides a fluent interface
      */
     public function setStorage(Storage\StorageInterface $storage)
     {
@@ -114,9 +101,9 @@ class AuthenticationService
     /**
      * Authenticates against the supplied adapter
      *
-     * @param  Zend\Authentication\Adapter\AdapterInterface $adapter
-     * @return Zend\Authentication\Result
-     * @throws Zend\Authentication\Exception\RuntimeException
+     * @param  Adapter\AdapterInterface $adapter
+     * @return Result
+     * @throws Exception\RuntimeException
      */
     public function authenticate(Adapter\AdapterInterface $adapter = null)
     {
@@ -128,7 +115,7 @@ class AuthenticationService
         $result = $adapter->authenticate();
 
         /**
-         * ZF-7546 - prevent multiple succesive calls from storing inconsistent results
+         * ZF-7546 - prevent multiple successive calls from storing inconsistent results
          * Ensure storage has clean state
          */
         if ($this->hasIdentity()) {

@@ -1,21 +1,11 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_InputFilter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_InputFilter
  */
 
 namespace Zend\InputFilter;
@@ -23,14 +13,12 @@ namespace Zend\InputFilter;
 use Traversable;
 use Zend\Filter\FilterChain;
 use Zend\Stdlib\ArrayUtils;
-use Zend\Validator\ValidatorInterface;
 use Zend\Validator\ValidatorChain;
+use Zend\Validator\ValidatorInterface;
 
 /**
  * @category   Zend
  * @package    Zend_InputFilter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Factory
 {
@@ -48,7 +36,7 @@ class Factory
         $this->defaultFilterChain = $filterChain;
         return $this;
     }
-    
+
     /**
      * Get default filter chain, if any
      *
@@ -61,7 +49,7 @@ class Factory
 
     /**
      * Clear the default filter chain (i.e., don't inject one into new inputs)
-     * 
+     *
      * @return void
      */
     public function clearDefaultFilterChain()
@@ -80,7 +68,7 @@ class Factory
         $this->defaultValidatorChain = $validatorChain;
         return $this;
     }
-    
+
     /**
      * Get default validator chain, if any
      *
@@ -93,7 +81,7 @@ class Factory
 
     /**
      * Clear the default validator chain (i.e., don't inject one into new inputs)
-     * 
+     *
      * @return void
      */
     public function clearDefaultValidatorChain()
@@ -103,8 +91,8 @@ class Factory
 
     /**
      * Factory for input objects
-     * 
-     * @param  array|Traversable $inputSpecification 
+     *
+     * @param  array|Traversable $inputSpecification
      * @return InputInterface|InputFilterInterface
      */
     public function createInput($inputSpecification)
@@ -158,14 +146,24 @@ class Factory
                     break;
                 case 'required':
                     $input->setRequired($value);
+                    if (!isset($inputSpecification['allow_empty'])) {
+                        $input->setAllowEmpty(!$value);
+                    }
                     break;
                 case 'allow_empty':
                     $input->setAllowEmpty($value);
+                    if (!isset($inputSpecification['required'])) {
+                        $input->setRequired(!$value);
+                    }
                     break;
                 case 'filters':
+                    if ($value instanceof FilterChain) {
+                        $input->setFilterChain($value);
+                        break;
+                    }
                     if (!is_array($value) && !$value instanceof Traversable) {
                         throw new Exception\RuntimeException(sprintf(
-                            '%s expects the value associated with "filters" to be an array/Traversable of filters or filter specifications; received "%s"',
+                            '%s expects the value associated with "filters" to be an array/Traversable of filters or filter specifications, or a FilterChain; received "%s"',
                             __METHOD__,
                             (is_object($value) ? get_class($value) : gettype($value))
                         ));
@@ -173,9 +171,13 @@ class Factory
                     $this->populateFilters($input->getFilterChain(), $value);
                     break;
                 case 'validators':
+                    if ($value instanceof ValidatorChain) {
+                        $input->setValidatorChain($value);
+                        break;
+                    }
                     if (!is_array($value) && !$value instanceof Traversable) {
                         throw new Exception\RuntimeException(sprintf(
-                            '%s expects the value associated with "validators" to be an array/Traversable of validators or validator specifications; received "%s"',
+                            '%s expects the value associated with "validators" to be an array/Traversable of validators or validator specifications, or a ValidatorChain; received "%s"',
                             __METHOD__,
                             (is_object($value) ? get_class($value) : gettype($value))
                         ));
@@ -193,8 +195,8 @@ class Factory
 
     /**
      * Factory for input filters
-     * 
-     * @param  array|Traversable $inputFilterSpecification 
+     *
+     * @param  array|Traversable $inputFilterSpecification
      * @return InputFilterInterface
      */
     public function createInputFilter($inputFilterSpecification)
@@ -211,7 +213,7 @@ class Factory
         }
 
         $class = 'Zend\InputFilter\InputFilter';
-        if (isset($inputFilterSpecification['type'])) {
+        if (isset($inputFilterSpecification['type']) && is_string($inputFilterSpecification['type'])) {
             $class = $inputFilterSpecification['type'];
             if (!class_exists($class)) {
                 throw new Exception\RuntimeException(sprintf(

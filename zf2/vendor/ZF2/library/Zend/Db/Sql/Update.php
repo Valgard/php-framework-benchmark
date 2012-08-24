@@ -10,11 +10,11 @@
 
 namespace Zend\Db\Sql;
 
-use Zend\Db\Adapter\Adapter,
-    Zend\Db\Adapter\Driver\StatementInterface,
-    Zend\Db\Adapter\Platform\PlatformInterface,
-    Zend\Db\Adapter\Platform\Sql92,
-    Zend\Db\Adapter\ParameterContainer;
+use Zend\Db\Adapter\Adapter;
+use Zend\Db\Adapter\StatementContainerInterface;
+use Zend\Db\Adapter\ParameterContainer;
+use Zend\Db\Adapter\Platform\PlatformInterface;
+use Zend\Db\Adapter\Platform\Sql92;
 
 /**
  * @category   Zend
@@ -62,10 +62,9 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
 
     /**
      * Constructor
-     * 
-     * @param  null|string $table 
+     *
+     * @param  null|string $table
      * @param  null|string $schema
-     * @return void
      */
     public function __construct($table = null)
     {
@@ -77,8 +76,8 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
 
     /**
      * Specify table for statement
-     * 
-     * @param  string $table 
+     *
+     * @param  string $table
      * @param  null|string $schema
      * @return Update
      */
@@ -90,7 +89,7 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
 
     /**
      * Set key/value pairs to update
-     * 
+     *
      * @param  array $values Associative array of key values
      * @param  string $flag One of the VALUES_* constants
      * @return Update
@@ -117,13 +116,17 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
 
     /**
      * Create where clause
-     * 
-     * @param  Where|\Closure|string|array $predicate 
+     *
+     * @param  Where|\Closure|string|array $predicate
      * @param  string $combination One of the OP_* constants from Predicate\PredicateSet
      * @return Select
      */
     public function where($predicate, $combination = Predicate\PredicateSet::OP_AND)
     {
+        if (is_null($predicate)) {
+            throw new \Zend\Db\Sql\Exception\InvalidArgumentException('Predicate cannot be null');
+        }
+
         if ($predicate instanceof Where) {
             $this->where = $predicate;
         } elseif ($predicate instanceof \Closure) {
@@ -131,6 +134,7 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
         } else {
             if (is_string($predicate)) {
                 $predicate = new Predicate\Expression($predicate);
+                $this->where->addPredicate($predicate, $combination);
             } elseif (is_array($predicate)) {
                 foreach ($predicate as $pkey => $pvalue) {
                     if (is_string($pkey) && strpos($pkey, '?') !== false) {
@@ -140,9 +144,9 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
                     } else {
                         $predicate = new Predicate\Expression($pvalue);
                     }
+                    $this->where->addPredicate($predicate, $combination);
                 }
             }
-            $this->where->addPredicate($predicate, $combination);
         }
         return $this;
     }
@@ -162,18 +166,18 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
      * Prepare statement
      *
      * @param \Zend\Db\Adapter\Adapter $adapter
-     * @param \Zend\Db\Adapter\Driver\StatementInterface $statement
+     * @param \Zend\Db\Adapter\Driver\StatementInterface $statementContainer
      * @return void
      */
-    public function prepareStatement(Adapter $adapter, StatementInterface $statement)
+    public function prepareStatement(Adapter $adapter, StatementContainerInterface $statementContainer)
     {
         $driver   = $adapter->getDriver();
         $platform = $adapter->getPlatform();
-        $parameterContainer = $statement->getParameterContainer();
+        $parameterContainer = $statementContainer->getParameterContainer();
 
         if (!$parameterContainer instanceof ParameterContainer) {
             $parameterContainer = new ParameterContainer();
-            $statement->setParameterContainer($parameterContainer);
+            $statementContainer->setParameterContainer($parameterContainer);
         }
 
         $table = $platform->quoteIdentifier($this->table);
@@ -182,8 +186,14 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
         if (is_array($set)) {
             $setSql = array();
             foreach ($set as $column => $value) {
-                $parameterContainer->offsetSet($column, $value);
-                $setSql[] = $platform->quoteIdentifier($column) . ' = ' . $driver->formatParameterName($column);
+                if ($value instanceof Expression) {
+                    $exprData = $this->processExpression($value, $platform, $adapter);
+                    $setSql[] = $platform->quoteIdentifier($column) . ' = ' . $exprData->getSql();
+                    $parameterContainer->merge($exprData->getParameterContainer());
+                } else {
+                    $setSql[] = $platform->quoteIdentifier($column) . ' = ' . $driver->formatParameterName($column);
+                    $parameterContainer->offsetSet($column, $value);
+                }
             }
             $set = implode(', ', $setSql);
         }
@@ -192,18 +202,16 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
 
         // process where
         if ($this->where->count() > 0) {
-            $whereParts = $this->processExpression($this->where, $platform, $adapter->getDriver(), 'where');
-            if (count($whereParts['parameters']) > 0) {
-                $parameterContainer->merge($whereParts['parameters']);
-            }
-            $sql .= ' ' . sprintf($this->specifications[self::SPECIFICATION_WHERE], $whereParts['sql']);
+            $whereParts = $this->processExpression($this->where, $platform, $adapter, 'where');
+            $parameterContainer->merge($whereParts->getParameterContainer());
+            $sql .= ' ' . sprintf($this->specifications[self::SPECIFICATION_WHERE], $whereParts->getSql());
         }
-        $statement->setSql($sql);
+        $statementContainer->setSql($sql);
     }
 
     /**
      * Get SQL string for statement
-     * 
+     *
      * @param  null|PlatformInterface $adapterPlatform If null, defaults to Sql92
      * @return string
      */
@@ -215,8 +223,13 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
         $set = $this->set;
         if (is_array($set)) {
             $setSql = array();
-            foreach ($set as $setName => $setValue) {
-                $setSql[] = $adapterPlatform->quoteIdentifier($setName) . ' = ' . $adapterPlatform->quoteValue($setValue);
+            foreach ($set as $column => $value) {
+                if ($value instanceof Expression) {
+                    $exprData = $this->processExpression($value, $adapterPlatform);
+                    $setSql[] = $adapterPlatform->quoteIdentifier($column) . ' = ' . $exprData->getSql();
+                } else {
+                    $setSql[] = $adapterPlatform->quoteIdentifier($column) . ' = ' . $adapterPlatform->quoteValue($value);
+                }
             }
             $set = implode(', ', $setSql);
         }
@@ -224,7 +237,7 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
         $sql = sprintf($this->specifications[self::SPECIFICATION_UPDATE], $table, $set);
         if ($this->where->count() > 0) {
             $whereParts = $this->processExpression($this->where, $adapterPlatform, null, 'where');
-            $sql .= ' ' . sprintf($this->specifications[self::SPECIFICATION_WHERE], $whereParts['sql']);
+            $sql .= ' ' . sprintf($this->specifications[self::SPECIFICATION_WHERE], $whereParts->getSql());
         }
         return $sql;
     }
@@ -233,8 +246,8 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
      * Variable overloading
      *
      * Proxies to "where" only
-     * 
-     * @param  string $name 
+     *
+     * @param  string $name
      * @return mixed
      */
     public function __get($name)
@@ -243,5 +256,17 @@ class Update extends AbstractSql implements SqlInterface, PreparableSqlInterface
             case 'where':
                 return $this->where;
         }
+    }
+
+    /**
+     * __clone
+     *
+     * Resets the where object each time the Update is cloned.
+     *
+     * @return void
+     */
+    public function __clone()
+    {
+        $this->where = clone $this->where;
     }
 }

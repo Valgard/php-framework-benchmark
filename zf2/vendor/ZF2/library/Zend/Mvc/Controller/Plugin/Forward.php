@@ -1,28 +1,17 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Mvc
- * @subpackage Controller
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Mvc
  */
 
 namespace Zend\Mvc\Controller\Plugin;
 
-use Zend\Mvc\InjectApplicationEventInterface;
 use Zend\Mvc\Exception;
+use Zend\Mvc\InjectApplicationEventInterface;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
@@ -33,20 +22,33 @@ use Zend\Stdlib\DispatchableInterface as Dispatchable;
  * @category   Zend
  * @package    Zend_Mvc
  * @subpackage Controller
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Forward extends AbstractPlugin
 {
+    /**
+     * @var MvcEvent
+     */
     protected $event;
+
+    /**
+     * @var ServiceLocatorInterface
+     */
     protected $locator;
+
+    /**
+     * @var int
+     */
     protected $maxNestedForwards = 10;
+
+    /**
+     * @var int
+     */
     protected $numNestedForwards = 0;
 
     /**
      * Set maximum number of nested forwards allowed
-     * 
-     * @param  int $maxNestedForwards 
+     *
+     * @param  int $maxNestedForwards
      * @return Forward
      */
     public function setMaxNestedForwards($maxNestedForwards)
@@ -57,7 +59,7 @@ class Forward extends AbstractPlugin
 
     /**
      * Dispatch another controller
-     * 
+     *
      * @param  string $name Controller name; either a class name or an alias used in the DI container or service locator
      * @param  null|array $params Parameters with which to seed a custom RouteMatch object for the new controller
      * @return mixed
@@ -66,7 +68,7 @@ class Forward extends AbstractPlugin
      */
     public function dispatch($name, array $params = null)
     {
-        $event   = $this->getEvent();
+        $event   = clone($this->getEvent());
         $locator = $this->getLocator();
         $scoped  = false;
 
@@ -80,21 +82,18 @@ class Forward extends AbstractPlugin
         if (!$controller instanceof Dispatchable) {
             throw new Exception\DomainException('Can only forward to DispatchableInterface classes; class of type ' . get_class($controller) . ' received');
         }
+        if ($controller instanceof InjectApplicationEventInterface) {
+            $controller->setEvent($event);
+        }
         if (!$scoped) {
-            if ($controller instanceof InjectApplicationEventInterface) {
-                $controller->setEvent($event);
-            }
             if ($controller instanceof ServiceLocatorAwareInterface) {
                 $controller->setServiceLocator($locator);
             }
         }
 
         // Allow passing parameters to seed the RouteMatch with
-        $cachedMatches = false;
         if ($params) {
-            $matches       = new RouteMatch($params);
-            $cachedMatches = $event->getRouteMatch();
-            $event->setRouteMatch($matches);
+            $event->setRouteMatch(new RouteMatch($params));
         }
 
         if ($this->numNestedForwards > $this->maxNestedForwards) {
@@ -106,16 +105,12 @@ class Forward extends AbstractPlugin
 
         $this->numNestedForwards--;
 
-        if ($cachedMatches) {
-            $event->setRouteMatch($cachedMatches);
-        }
-
         return $return;
     }
 
     /**
      * Get the locator
-     * 
+     *
      * @return ServiceLocatorInterface
      * @throws Exception\DomainException if unable to find locator
      */
@@ -140,7 +135,7 @@ class Forward extends AbstractPlugin
 
     /**
      * Get the event
-     * 
+     *
      * @return MvcEvent
      * @throws Exception\DomainException if unable to find event
      */

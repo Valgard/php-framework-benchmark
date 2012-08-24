@@ -1,30 +1,17 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Captcha
- * @subpackage Adapter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Captcha
  */
 
 namespace Zend\Captcha;
 
 use DirectoryIterator;
 use Zend\Captcha\Exception;
-use Zend\Loader\Pluggable;
-use Zend\Stdlib\ErrorException;
 use Zend\Stdlib\ErrorHandler;
 
 /**
@@ -35,10 +22,8 @@ use Zend\Stdlib\ErrorHandler;
  * @category   Zend
  * @package    Zend_Captcha
  * @subpackage Adapter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Image extends Word
+class Image extends AbstractWord
 {
     /**
      * Directory for generated images
@@ -138,7 +123,6 @@ class Image extends Word
      * Constructor
      *
      * @param  array|\Traversable $options
-     * @return void
      */
     public function __construct($options = null)
     {
@@ -281,6 +265,7 @@ class Image extends Word
 
     /**
      * @param string $startImage
+     * @return Image
      */
     public function setStartImage($startImage)
     {
@@ -290,6 +275,7 @@ class Image extends Word
 
     /**
      * @param int $dotNoiseLevel
+     * @return Image
      */
     public function setDotNoiseLevel($dotNoiseLevel)
     {
@@ -299,6 +285,7 @@ class Image extends Word
 
     /**
      * @param int $lineNoiseLevel
+     * @return Image
      */
     public function setLineNoiseLevel($lineNoiseLevel)
     {
@@ -392,6 +379,7 @@ class Image extends Word
 
     /**
      * @param string $imgAlt
+     * @return Image
      */
     public function setImgAlt($imgAlt)
     {
@@ -400,7 +388,7 @@ class Image extends Word
     }
 
     /**
-     * Set captch image filename suffix
+     * Set captcha image filename suffix
      *
      * @param  string $suffix
      * @return Image
@@ -492,7 +480,7 @@ class Image extends Word
         $font = $this->getFont();
 
         if (empty($font)) {
-            throw new Exception\NoFontProvidedException("Image CAPTCHA requires font");
+            throw new Exception\NoFontProvidedException('Image CAPTCHA requires font');
         }
 
         $w     = $this->getWidth();
@@ -508,8 +496,10 @@ class Image extends Word
             ErrorHandler::start();
             $img   = imagecreatefrompng($this->startImage);
             $error = ErrorHandler::stop();
-            if (!$img || $error instanceof ErrorException) {
-                throw new Exception\ImageNotLoadableException("Can not load start image");
+            if (!$img || $error) {
+                throw new Exception\ImageNotLoadableException(
+                    "Can not load start image '{$this->startImage}'", 0, $error
+                );
             }
             $w = imagesx($img);
             $h = imagesy($img);
@@ -617,7 +607,7 @@ class Image extends Word
         $suffixLength = strlen($this->suffix);
         foreach (new DirectoryIterator($imgdir) as $file) {
             if (!$file->isDot() && !$file->isDir()) {
-                if ($file->getMTime() < $expire) {
+                if (file_exists($file->getPathname()) && $file->getMTime() < $expire) {
                     // only deletes files ending with $this->suffix
                     if (substr($file->getFilename(), -($suffixLength)) == $this->suffix) {
                         unlink($file->getPathname());
@@ -629,7 +619,7 @@ class Image extends Word
 
     /**
      * Get helper name used to render captcha
-     * 
+     *
      * @return string
      */
     public function getHelperName()

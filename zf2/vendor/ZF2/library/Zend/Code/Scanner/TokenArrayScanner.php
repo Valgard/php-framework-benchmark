@@ -1,10 +1,18 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Code
+ */
 
 namespace Zend\Code\Scanner;
 
-use Zend\Code\NameInformation;
-use Zend\Code\Exception;
 use Zend\Code\Annotation\AnnotationManager;
+use Zend\Code\Exception;
+use Zend\Code\NameInformation;
 
 class TokenArrayScanner implements ScannerInterface
 {
@@ -54,7 +62,7 @@ class TokenArrayScanner implements ScannerInterface
     }
 
     /**
-     * @todo Assignment of $this->docComment should probably be done in scan() 
+     * @todo Assignment of $this->docComment should probably be done in scan()
      *       and then $this->getDocComment() just retrieves it.
      */
     public function getDocComment()
@@ -63,11 +71,10 @@ class TokenArrayScanner implements ScannerInterface
             $type    = $token[0];
             $value   = $token[1];
             $lineNum = $token[2];
-            if(($type == T_OPEN_TAG) || ($type == T_WHITESPACE)) {
+            if (($type == T_OPEN_TAG) || ($type == T_WHITESPACE)) {
                 continue;
             } elseif ($type == T_DOC_COMMENT) {
                 $this->docComment = $value;
-                $this->startLine  = $lineNum + substr_count($value, "\n") + 1;
                 return $this->docComment;
             } else {
                 // Only whitespace is allowed before file docblocks
@@ -231,8 +238,8 @@ class TokenArrayScanner implements ScannerInterface
     }
 
     /**
-     * @todo: $this->docComment should be assigned for valid docblock during 
-     *        the scan instead of $this->getDocComment() (starting with 
+     * @todo: $this->docComment should be assigned for valid docblock during
+     *        the scan instead of $this->getDocComment() (starting with
      *        T_DOC_COMMENT case)
      */
     protected function scan()
@@ -263,8 +270,7 @@ class TokenArrayScanner implements ScannerInterface
         /*
          * MACRO creation
          */
-        $MACRO_TOKEN_ADVANCE             = function() use (&$tokens, &$tokenIndex, &$token, &$tokenType, &$tokenContent, &$tokenLine)
-        {
+        $MACRO_TOKEN_ADVANCE             = function() use (&$tokens, &$tokenIndex, &$token, &$tokenType, &$tokenContent, &$tokenLine) {
             $tokenIndex = ($tokenIndex === null) ? 0 : $tokenIndex + 1;
             if (!isset($tokens[$tokenIndex])) {
                 $token        = false;
@@ -287,18 +293,15 @@ class TokenArrayScanner implements ScannerInterface
             }
             return $tokenIndex;
         };
-        $MACRO_TOKEN_LOGICAL_START_INDEX = function() use (&$tokenIndex, &$docCommentIndex)
-        {
+        $MACRO_TOKEN_LOGICAL_START_INDEX = function() use (&$tokenIndex, &$docCommentIndex) {
             ;
             return ($docCommentIndex === false) ? $tokenIndex : $docCommentIndex;
         };
-        $MACRO_DOC_COMMENT_START         = function() use (&$tokenIndex, &$docCommentIndex)
-        {
+        $MACRO_DOC_COMMENT_START         = function() use (&$tokenIndex, &$docCommentIndex) {
             $docCommentIndex = $tokenIndex;
             return $docCommentIndex;
         };
-        $MACRO_DOC_COMMENT_VALIDATE      = function() use (&$tokenType, &$docCommentIndex)
-        {
+        $MACRO_DOC_COMMENT_VALIDATE      = function() use (&$tokenType, &$docCommentIndex) {
             static $validTrailingTokens = null;
             if ($validTrailingTokens === null) {
                 $validTrailingTokens = array(T_WHITESPACE, T_FINAL, T_ABSTRACT, T_INTERFACE, T_CLASS, T_FUNCTION);
@@ -308,8 +311,7 @@ class TokenArrayScanner implements ScannerInterface
             }
             return $docCommentIndex;
         };
-        $MACRO_INFO_ADVANCE              = function() use (&$infoIndex, &$infos, &$tokenIndex, &$tokenLine)
-        {
+        $MACRO_INFO_ADVANCE              = function() use (&$infoIndex, &$infos, &$tokenIndex, &$tokenLine) {
             $infos[$infoIndex]['tokenEnd'] = $tokenIndex;
             $infos[$infoIndex]['lineEnd']  = $tokenLine;
             $infoIndex++;

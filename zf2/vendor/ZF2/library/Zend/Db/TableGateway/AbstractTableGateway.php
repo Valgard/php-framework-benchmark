@@ -10,14 +10,15 @@
 
 namespace Zend\Db\TableGateway;
 
-use Zend\Db\Adapter\Adapter,
-    Zend\Db\Sql\TableIdentifier,
-    Zend\Db\ResultSet\ResultSet,
-    Zend\Db\Sql\Sql,
-    Zend\Db\Sql\Select,
-    Zend\Db\Sql\Insert,
-    Zend\Db\Sql\Update,
-    Zend\Db\Sql\Delete;
+use Zend\Db\Adapter\Adapter;
+use Zend\Db\ResultSet\ResultSet;
+use Zend\Db\ResultSet\ResultSetInterface;
+use Zend\Db\Sql\Delete;
+use Zend\Db\Sql\Insert;
+use Zend\Db\Sql\Select;
+use Zend\Db\Sql\Sql;
+use Zend\Db\Sql\TableIdentifier;
+use Zend\Db\Sql\Update;
 
 /**
  * @category   Zend
@@ -26,7 +27,7 @@ use Zend\Db\Adapter\Adapter,
  *
  * @property Adapter $adapter
  * @property int $lastInsertValue
- * @property string $tableName
+ * @property string $table
  */
 abstract class AbstractTableGateway implements TableGatewayInterface
 {
@@ -57,12 +58,12 @@ abstract class AbstractTableGateway implements TableGatewayInterface
     protected $featureSet = null;
 
     /**
-     * @var ResultSet
+     * @var ResultSetInterface
      */
     protected $resultSetPrototype = null;
 
     /**
-     * @var Sql\Sql
+     * @var Sql
      */
     protected $sql = null;
 
@@ -106,12 +107,12 @@ abstract class AbstractTableGateway implements TableGatewayInterface
             throw new Exception\RuntimeException('This table object does not have a valid table set.');
         }
 
-        if (!$this->resultSetPrototype instanceof ResultSet) {
+        if (!$this->resultSetPrototype instanceof ResultSetInterface) {
             $this->resultSetPrototype = new ResultSet;
         }
 
         if (!$this->sql instanceof Sql) {
-            $this->sql = new Sql($this->adapter, $this->tableName);
+            $this->sql = new Sql($this->adapter, $this->table);
         }
 
         $this->featureSet->apply('postInitialize', array());
@@ -121,8 +122,8 @@ abstract class AbstractTableGateway implements TableGatewayInterface
 
     /**
      * Get table name
-     * 
-     * @return string 
+     *
+     * @return string
      */
     public function getTable()
     {
@@ -131,7 +132,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
 
     /**
      * Get adapter
-     * 
+     *
      * @return Adapter
      */
     public function getAdapter()
@@ -175,7 +176,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
 
     /**
      * Select
-     * 
+     *
      * @param string|array|\Closure $where
      * @return ResultSet
      */
@@ -197,8 +198,8 @@ abstract class AbstractTableGateway implements TableGatewayInterface
     }
 
     /**
-     * @param Sql\Select $select
-     * @return null|ResultSet
+     * @param Select $select
+     * @return null|ResultSetInterface
      * @throws \RuntimeException
      */
     public function selectWith(Select $select)
@@ -235,7 +236,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
 
         // build result set
         $resultSet = clone $this->resultSetPrototype;
-        $resultSet->setDataSource($result);
+        $resultSet->initialize($result);
 
         // apply postSelect features
         $this->featureSet->apply('postSelect', array($statement, $result, $resultSet));
@@ -313,7 +314,9 @@ abstract class AbstractTableGateway implements TableGatewayInterface
         $sql = $this->sql;
         $update = $sql->update();
         $update->set($set);
-        $update->where($where);
+        if ($where !== null) {
+            $update->where($where);
+        }
         return $this->executeUpdate($update);
     }
 
@@ -413,8 +416,8 @@ abstract class AbstractTableGateway implements TableGatewayInterface
 
     /**
      * Get last insert value
-     * 
-     * @return integer 
+     *
+     * @return integer
      */
     public function getLastInsertValue()
     {
@@ -423,7 +426,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
 
     /**
      * __get
-     * 
+     *
      * @param  string $property
      * @return mixed
      */

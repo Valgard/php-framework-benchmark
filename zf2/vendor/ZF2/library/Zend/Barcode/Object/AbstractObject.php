@@ -1,38 +1,25 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @subpackage Object
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Barcode
  */
 
 namespace Zend\Barcode\Object;
 
-use Traversable,
-    Zend\Barcode,
-    Zend\Validator\Barcode as BarcodeValidator,
-    Zend\Stdlib\ArrayUtils;
+use Traversable;
+use Zend\Barcode;
+use Zend\Stdlib\ArrayUtils;
+use Zend\Validator\Barcode as BarcodeValidator;
 
 /**
  * Class for generate Barcode
  *
  * @category   Zend
  * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 abstract class AbstractObject implements ObjectInterface
 {
@@ -187,34 +174,33 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Fix barcode length (numeric or string like 'even')
-     * @var $_barcodeLength integer | string
+     * @var $barcodeLength integer | string
      */
     protected $barcodeLength = null;
 
     /**
      * Activate automatic addition of leading zeros
      * if barcode length is fixed
-     * @var $_addLeadingZeros boolean
+     * @var $addLeadingZeros boolean
      */
     protected $addLeadingZeros = true;
 
     /**
      * Activation of mandatory checksum
      * to deactivate unauthorized modification
-     * @var $_mandatoryChecksum boolean
+     * @var $mandatoryChecksum boolean
      */
     protected $mandatoryChecksum = false;
 
     /**
      * Character used to substitute checksum character for validation
-     * @var $_substituteChecksumCharacter mixed
+     * @var $substituteChecksumCharacter mixed
      */
     protected $substituteChecksumCharacter = 0;
 
     /**
      * Constructor
      * @param array|Traversable $options
-     * @return void
      */
     public function __construct($options = null)
     {
@@ -226,7 +212,7 @@ abstract class AbstractObject implements ObjectInterface
         if (is_array($options)) {
             $this->setOptions($options);
         }
-        $this->type = strtolower(substr(get_class($this), strlen($this->barcodeNamespace) + 1));
+        $this->type = strtolower(substr(get_called_class(), strlen($this->barcodeNamespace) + 1));
         if ($this->mandatoryChecksum) {
             $this->withChecksum = true;
             $this->withChecksumInText = true;
@@ -416,7 +402,7 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Retrieve color of the barcode and text
-     * @return unknown
+     * @return integer
      */
     public function getForeColor()
     {
@@ -475,7 +461,7 @@ abstract class AbstractObject implements ObjectInterface
     /**
      * Activate/deactivate drawing of the quiet zones
      * @param boolean $value
-     * @return Zend\Barcode\AbstractObject
+     * @return AbstractObject
      */
     public function setWithQuietZones($value)
     {
@@ -553,6 +539,7 @@ abstract class AbstractObject implements ObjectInterface
      * Automatically add leading zeros if barcode length is fixed
      * @param string $text
      * @param boolean $withoutChecksum
+     * @return string
      */
     protected function addLeadingZeros($text, $withoutChecksum = false)
     {
@@ -957,6 +944,7 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Get height of the result object
+     * @param bool $recalculate
      * @return integer
      */
     public function getHeight($recalculate = false)
@@ -971,6 +959,7 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Get width of the result object
+     * @param bool $recalculate
      * @return integer
      */
     public function getWidth($recalculate = false)
@@ -1195,7 +1184,7 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Check for invalid characters
-     * @param   string $value    Text to be ckecked
+     * @param   string $value    Text to be checked
      * @return void
      */
     public function validateText($value)

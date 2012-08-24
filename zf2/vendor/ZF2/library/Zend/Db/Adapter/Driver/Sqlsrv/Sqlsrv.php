@@ -10,8 +10,8 @@
 
 namespace Zend\Db\Adapter\Driver\Sqlsrv;
 
-use Zend\Db\Adapter\Driver\DriverInterface,
-    Zend\Db\Adapter\Exception;
+use Zend\Db\Adapter\Driver\DriverInterface;
+use Zend\Db\Adapter\Exception;
 
 /**
  * @category   Zend
@@ -47,10 +47,6 @@ class Sqlsrv implements DriverInterface
             $connection = new Connection($connection);
         }
 
-        if (!$connection instanceof Connection) {
-            throw new Exception\InvalidArgumentException('$connection must be an array of parameters or a Pdo\Connection object');
-        }
-
         $this->registerConnection($connection);
         $this->registerStatementPrototype(($statementPrototype) ?: new Statement());
         $this->registerResultPrototype(($resultPrototype) ?: new Result());
@@ -58,9 +54,9 @@ class Sqlsrv implements DriverInterface
 
     /**
      * Register connection
-     * 
+     *
      * @param  Connection $connection
-     * @return Sqlsrv 
+     * @return Sqlsrv
      */
     public function registerConnection(Connection $connection)
     {
@@ -71,8 +67,8 @@ class Sqlsrv implements DriverInterface
 
     /**
      * Register statement prototype
-     * 
-     * @param Statement $statementPrototype 
+     *
+     * @param Statement $statementPrototype
      */
     public function registerStatementPrototype(Statement $statementPrototype)
     {
@@ -82,8 +78,8 @@ class Sqlsrv implements DriverInterface
 
     /**
      * Register result prototype
-     * 
-     * @param Result $resultPrototype 
+     *
+     * @param Result $resultPrototype
      */
     public function registerResultPrototype(Result $resultPrototype)
     {
@@ -92,9 +88,9 @@ class Sqlsrv implements DriverInterface
 
     /**
      * Get database paltform name
-     * 
+     *
      * @param  string $nameFormat
-     * @return string 
+     * @return string
      */
     public function getDatabasePlatformName($nameFormat = self::NAME_FORMAT_CAMELCASE)
     {

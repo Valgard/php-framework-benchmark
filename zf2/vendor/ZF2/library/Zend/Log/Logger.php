@@ -1,41 +1,27 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Log
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Log
  */
 
 namespace Zend\Log;
 
-use DateTime,
-    Zend\Stdlib\SplPriorityQueue,
-    Traversable,
-    Zend\Loader\Broker,
-    Zend\Loader\Pluggable,
-    Zend\Stdlib\ArrayUtils;
+use DateTime;
+use Traversable;
+use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\SplPriorityQueue;
 
 /**
  * Logging messages with a stack of backends
  *
  * @category   Zend
  * @package    Zend_Log
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Logger implements LoggableInterface, Pluggable
+class Logger implements LoggerInterface
 {
     /**
      * @const int defined from the BSD Syslog message severities
@@ -49,14 +35,6 @@ class Logger implements LoggableInterface, Pluggable
     const NOTICE = 5;
     const INFO   = 6;
     const DEBUG  = 7;
-
-    /**
-     * The format of the date used for a log entry (ISO 8601 date)
-     * 
-     * @see http://nl3.php.net/manual/en/function.date.php
-     * @var string
-     */
-    protected $dateTimeFormat = 'c';
 
     /**
      * List of priority code => priority (short) name
@@ -82,30 +60,30 @@ class Logger implements LoggableInterface, Pluggable
     protected $writers;
 
     /**
-     * Writer broker
+     * Writer plugins
      *
-     * @var WriterBroker
+     * @var WriterPluginManager
      */
-    protected $writerBroker;
+    protected $writerPlugins;
 
     /**
      * Registered error handler
-     * 
+     *
      * @var boolean
      */
     protected static $registeredErrorHandler = false;
-       
+
     /**
      * Registered exception handler
-     * 
+     *
      * @var boolean
      */
     protected static $registeredExceptionHandler = false;
-    
+
     /**
      * Constructor
      *
-     * @todo support configuration (writers, dateTimeFormat, and broker)
+     * @todo support configuration (writers, dateTimeFormat, and writer plugin manager)
      * @return Logger
      */
     public function __construct()
@@ -128,62 +106,39 @@ class Logger implements LoggableInterface, Pluggable
     }
 
     /**
-     * Return the format of DateTime
+     * Get writer plugin manager
      *
-     * @return string
+     * @return WriterPluginManager
      */
-    public function getDateTimeFormat()
+    public function getWriterPluginManager()
     {
-        return $this->dateTimeFormat;
-    }
-
-    /**
-     * Set the format of DateTime
-     *
-     * @see    http://nl3.php.net/manual/en/function.date.php
-     * @param  string $format
-     * @return Logger
-     */
-    public function setDateTimeFormat($format)
-    {
-        $this->dateTimeFormat = (string) $format;
-        return $this;
-    }
-
-    /**
-     * Get writer broker
-     *
-     * @see Pluggable::getBroker()
-     * @return Broker
-     */
-    public function getBroker()
-    {
-        if (null === $this->writerBroker) {
-            $this->setBroker(new WriterBroker());
+        if (null === $this->writerPlugins) {
+            $this->setWriterPluginManager(new WriterPluginManager());
         }
-        return $this->writerBroker;
+        return $this->writerPlugins;
     }
 
     /**
-     * Set writer broker
+     * Set writer plugin manager
      *
-     * @param string|Broker $broker
+     * @param  string|WriterPluginManager $plugins
      * @return Logger
      * @throws Exception\InvalidArgumentException
      */
-    public function setBroker($broker)
+    public function setWriterPluginManager($plugins)
     {
-        if (is_string($broker)) {
-            $broker = new $broker;
+        if (is_string($plugins)) {
+            $plugins = new $plugins;
         }
-        if (!$broker instanceof Broker) {
+        if (!$plugins instanceof WriterPluginManager) {
             throw new Exception\InvalidArgumentException(sprintf(
-                'Writer broker must implement Zend\Loader\Broker; received %s',
-                is_object($broker) ? get_class($broker) : gettype($broker)
+                'Writer plugin manager must extend %s\WriterPluginManager; received %s',
+                __NAMESPACE__,
+                is_object($plugins) ? get_class($plugins) : gettype($plugins)
             ));
         }
 
-        $this->writerBroker = $broker;
+        $this->writerPlugins = $plugins;
         return $this;
     }
 
@@ -194,9 +149,9 @@ class Logger implements LoggableInterface, Pluggable
      * @param array|null $options
      * @return Writer
      */
-    public function plugin($name, array $options = null)
+    public function writerPlugin($name, array $options = null)
     {
-        return $this->getBroker()->load($name, $options);
+        return $this->getWriterPluginManager()->get($name, $options);
     }
 
     /**
@@ -207,17 +162,17 @@ class Logger implements LoggableInterface, Pluggable
      * @return Logger
      * @throws Exception\InvalidArgumentException
      */
-    public function addWriter($writer, $priority=1)
+    public function addWriter($writer, $priority = 1, array $options = null)
     {
         if (is_string($writer)) {
-            $writer = $this->plugin($writer);
+            $writer = $this->writerPlugin($writer, $options);
         } elseif (!$writer instanceof Writer\WriterInterface) {
             throw new Exception\InvalidArgumentException(sprintf(
                 'Writer must implement Zend\Log\Writer; received "%s"',
                 is_object($writer) ? get_class($writer) : gettype($writer)
             ));
         }
-        
+
         $this->writers->insert($writer, $priority);
 
         return $this;
@@ -225,25 +180,23 @@ class Logger implements LoggableInterface, Pluggable
 
     /**
      * Get writers
-     * 
-     * @return SplPriorityQueue 
+     *
+     * @return SplPriorityQueue
      */
     public function getWriters()
     {
         return $this->writers;
     }
+
     /**
      * Set the writers
-     * 
-     * @param  SplPriorityQueue $writers 
-     * @throws Exception\InvalidArgumentException
+     *
+     * @param  SplPriorityQueue $writers
      * @return Logger
+     * @throws Exception\InvalidArgumentException
      */
-    public function setWriters($writers)
+    public function setWriters(SplPriorityQueue $writers)
     {
-        if (!$writers instanceof SplPriorityQueue) {
-            throw new Exception\InvalidArgumentException('Writers must be a SplPriorityQueue of Zend\Log\Writer');
-        }
         foreach ($writers->toArray() as $writer) {
             if (!$writer instanceof Writer\WriterInterface) {
                 throw new Exception\InvalidArgumentException('Writers must be a SplPriorityQueue of Zend\Log\Writer');
@@ -252,6 +205,7 @@ class Logger implements LoggableInterface, Pluggable
         $this->writers = $writers;
         return $this;
     }
+
     /**
      * Add a message as a log entry
      *
@@ -288,14 +242,13 @@ class Logger implements LoggableInterface, Pluggable
         if ($this->writers->count() === 0) {
             throw new Exception\RuntimeException('No log writer specified');
         }
-        
-        $date = new DateTime();
-        $timestamp = $date->format($this->getDateTimeFormat());
+
+        $timestamp = new DateTime();
 
         if (is_array($message)) {
             $message = var_export($message, true);
         }
-               
+
         foreach ($this->writers->toArray() as $writer) {
             $writer->write(array(
                 'timestamp'    => $timestamp,
@@ -388,14 +341,14 @@ class Logger implements LoggableInterface, Pluggable
     {
         return $this->log(self::DEBUG, $message, $extra);
     }
-    
+
     /**
      * Register logging system as an error handler to log PHP errors
      *
-     * @link http://www.php.net/manual/en/function.set-error-handler.php 
-     *
+     * @link http://www.php.net/manual/en/function.set-error-handler.php
      * @param  Logger $logger
-     * @return boolean
+     * @return bool
+     * @throws Exception\InvalidArgumentException if logger is null
      */
     public static function registerErrorHandler(Logger $logger)
     {
@@ -407,7 +360,7 @@ class Logger implements LoggableInterface, Pluggable
         if ($logger === null) {
             throw new Exception\InvalidArgumentException('Invalid Logger specified');
         }
-        
+
         $errorHandlerMap = array(
             E_NOTICE            => self::NOTICE,
             E_USER_NOTICE       => self::NOTICE,
@@ -422,7 +375,7 @@ class Logger implements LoggableInterface, Pluggable
             E_DEPRECATED        => self::DEBUG,
             E_USER_DEPRECATED   => self::DEBUG
         );
-        
+
         set_error_handler(function($errno, $errstr, $errfile, $errline, $errcontext) use ($errorHandlerMap, $logger) {
             $errorLevel = error_reporting();
 
@@ -432,28 +385,35 @@ class Logger implements LoggableInterface, Pluggable
                 } else {
                     $priority = Logger::INFO;
                 }
-                $logger->log($priority, $errstr, array('errno'=>$errno, 'file'=>$errfile, 'line'=>$errline, 'context'=>$errcontext));
+                $logger->log($priority, $errstr, array(
+                    'errno' => $errno,
+                    'file' => $errfile,
+                    'line' => $errline,
+                    'context' => $errcontext
+                ));
             }
         });
         self::$registeredErrorHandler = true;
         return true;
     }
+
     /**
      * Unregister error handler
-     * 
+     *
      */
     public static function unregisterErrorHandler()
     {
         restore_error_handler();
         self::$registeredErrorHandler = false;
     }
+
     /**
      * Register logging system as an exception handler to log PHP exceptions
-     * 
+     *
      * @link http://www.php.net/manual/en/function.set-exception-handler.php
-     * 
      * @param Logger $logger
-     * @return type 
+     * @return bool
+     * @throws Exception\InvalidArgumentException if logger is null
      */
     public static function registerExceptionHandler(Logger $logger)
     {
@@ -461,15 +421,17 @@ class Logger implements LoggableInterface, Pluggable
         if (self::$registeredExceptionHandler) {
             return false;
         }
-        
+
         if ($logger === null) {
             throw new Exception\InvalidArgumentException('Invalid Logger specified');
         }
-        
-        set_exception_handler(function ($exception) use ($logger){
-            $extra = array ('file'  => $exception->getFile(), 
-                            'line'  => $exception->getLine(),
-                            'trace' => $exception->getTrace());  
+
+        set_exception_handler(function ($exception) use ($logger) {
+            $extra = array(
+                'file'  => $exception->getFile(),
+                'line'  => $exception->getLine(),
+                'trace' => $exception->getTrace()
+            );
             if (isset($exception->xdebug_message)) {
                 $extra['xdebug'] = $exception->xdebug_message;
             }
@@ -478,7 +440,7 @@ class Logger implements LoggableInterface, Pluggable
         self::$registeredExceptionHandler = true;
         return true;
     }
-    
+
     /**
      * Unregister exception handler
      */

@@ -22,13 +22,36 @@ use Zend\EventManager\Event;
 class ModuleEvent extends Event
 {
     /**
+     * Module events triggered by eventmanager
+     */
+    CONST EVENT_LOAD_MODULES        = 'loadModules';
+    CONST EVENT_LOAD_MODULE_RESOLVE = 'loadModule.resolve';
+    CONST EVENT_LOAD_MODULE         = 'loadModule';
+    CONST EVENT_LOAD_MODULES_POST   = 'loadModules.post';
+
+    /**
+     * @var mixed
+     */
+    protected $module;
+
+    /**
+     * @var string
+     */
+    protected $moduleName;
+
+    /**
+     * @var Listener\ConfigMergerInterface
+     */
+    protected $configListener;
+
+    /**
      * Get the name of a given module
      *
      * @return string
      */
     public function getModuleName()
     {
-        return $this->getParam('moduleName');
+        return $this->moduleName;
     }
 
     /**
@@ -45,7 +68,9 @@ class ModuleEvent extends Event
                 ,__METHOD__, gettype($moduleName)
             ));
         }
-        $this->setParam('moduleName', $moduleName);
+        // Performance tweak, don't add it as param.
+        $this->moduleName = $moduleName;
+
         return $this;
     }
 
@@ -56,7 +81,7 @@ class ModuleEvent extends Event
      */
     public function getModule()
     {
-        return $this->getParam('module');
+        return $this->module;
     }
 
     /**
@@ -73,37 +98,33 @@ class ModuleEvent extends Event
                 ,__METHOD__, gettype($module)
             ));
         }
-        $this->setParam('module', $module);
+        // Performance tweak, don't add it as param.
+        $this->module = $module;
+
         return $this;
     }
 
     /**
-     * Get the config listner
+     * Get the config listener
      *
      * @return null|Listener\ConfigMergerInterface
      */
     public function getConfigListener()
     {
-        return $this->getParam('configListener');
+        return $this->configListener;
     }
 
     /**
      * Set module object to compose in this event
      *
-     * @param  Listener\ConfigMergerInterface $listener
+     * @param  Listener\ConfigMergerInterface $configListener
      * @return ModuleEvent
      */
-    public function setConfigListener($configListener)
+    public function setConfigListener(Listener\ConfigMergerInterface $configListener)
     {
-        if (!$configListener instanceof Listener\ConfigMergerInterface) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s::%s() expects an object implementing Zend\ModuleManager\Listener\ConfigMergerInterface as an argument; %s provided',
-                __CLASS__, 
-                __METHOD__, 
-                (is_object($configListener) ? get_class($configListener) : gettype($configListener))
-            ));
-        }
         $this->setParam('configListener', $configListener);
+        $this->configListener = $configListener;
+
         return $this;
     }
 }

@@ -1,21 +1,11 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Feed_Pubsubhubbub
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ * @package   Zend_Feed
  */
 
 namespace Zend\Feed\PubSubHubbub;
@@ -23,8 +13,6 @@ namespace Zend\Feed\PubSubHubbub;
 /**
  * @category   Zend
  * @package    Zend_Feed_Pubsubhubbub
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class HttpResponse
 {
@@ -33,31 +21,31 @@ class HttpResponse
      *
      * @var string
      */
-    protected $_body = '';
+    protected $content = '';
 
     /**
      * Array of headers. Each header is an array with keys 'name' and 'value'
      *
      * @var array
      */
-    protected $_headers = array();
+    protected $headers = array();
 
     /**
      * HTTP response code to use in headers
      *
      * @var int
      */
-    protected $_httpResponseCode = 200;
+    protected $statusCode = 200;
 
     /**
      * Send the response, including all headers
      *
      * @return void
      */
-    public function sendResponse()
+    public function send()
     {
         $this->sendHeaders();
-        echo $this->getBody();
+        echo $this->getContent();
     }
 
     /**
@@ -70,22 +58,22 @@ class HttpResponse
      */
     public function sendHeaders()
     {
-        if (count($this->_headers) || (200 != $this->_httpResponseCode)) {
+        if (count($this->headers) || (200 != $this->statusCode)) {
             $this->canSendHeaders(true);
-        } elseif (200 == $this->_httpResponseCode) {
+        } elseif (200 == $this->statusCode) {
             return;
         }
         $httpCodeSent = false;
-        foreach ($this->_headers as $header) {
-            if (!$httpCodeSent && $this->_httpResponseCode) {
-                header($header['name'] . ': ' . $header['value'], $header['replace'], $this->_httpResponseCode);
+        foreach ($this->headers as $header) {
+            if (!$httpCodeSent && $this->statusCode) {
+                header($header['name'] . ': ' . $header['value'], $header['replace'], $this->statusCode);
                 $httpCodeSent = true;
             } else {
                 header($header['name'] . ': ' . $header['value'], $header['replace']);
             }
         }
         if (!$httpCodeSent) {
-            header('HTTP/1.1 ' . $this->_httpResponseCode);
+            header('HTTP/1.1 ' . $this->statusCode);
             $httpCodeSent = true;
         }
     }
@@ -106,13 +94,13 @@ class HttpResponse
         $name  = $this->_normalizeHeader($name);
         $value = (string) $value;
         if ($replace) {
-            foreach ($this->_headers as $key => $header) {
+            foreach ($this->headers as $key => $header) {
                 if ($name == $header['name']) {
-                    unset($this->_headers[$key]);
+                    unset($this->headers[$key]);
                 }
             }
         }
-        $this->_headers[] = array(
+        $this->headers[] = array(
             'name'    => $name,
             'value'   => $value,
             'replace' => $replace,
@@ -130,7 +118,7 @@ class HttpResponse
     public function getHeader($name)
     {
         $name = $this->_normalizeHeader($name);
-        foreach ($this->_headers as $header) {
+        foreach ($this->headers as $header) {
             if ($header['name'] == $name) {
                 return $header['value'];
             }
@@ -138,13 +126,13 @@ class HttpResponse
     }
 
     /**
-     * Return array of headers; see {@link $_headers} for format
+     * Return array of headers; see {@link $headers} for format
      *
      * @return array
      */
     public function getHeaders()
     {
-        return $this->_headers;
+        return $this->headers;
     }
 
     /**
@@ -170,13 +158,13 @@ class HttpResponse
      * @return HttpResponse
      * @throws Exception\InvalidArgumentException
      */
-    public function setHttpResponseCode($code)
+    public function setStatusCode($code)
     {
         if (!is_int($code) || (100 > $code) || (599 < $code)) {
             throw new Exception\InvalidArgumentException('Invalid HTTP response'
             . ' code:' . $code);
         }
-        $this->_httpResponseCode = $code;
+        $this->statusCode = $code;
         return $this;
     }
 
@@ -185,9 +173,9 @@ class HttpResponse
      *
      * @return int
      */
-    public function getHttpResponseCode()
+    public function getStatusCode()
     {
-        return $this->_httpResponseCode;
+        return $this->statusCode;
     }
 
     /**
@@ -196,9 +184,9 @@ class HttpResponse
      * @param  string $content
      * @return \Zend\Feed\PubSubHubbub\HttpResponse
      */
-    public function setBody($content)
+    public function setContent($content)
     {
-        $this->_body = (string) $content;
+        $this->content = (string) $content;
         $this->setHeader('content-length', strlen($content));
         return $this;
     }
@@ -208,9 +196,9 @@ class HttpResponse
      *
      * @return string
      */
-    public function getBody()
+    public function getContent()
     {
-        return $this->_body;
+        return $this->content;
     }
 
     /**
